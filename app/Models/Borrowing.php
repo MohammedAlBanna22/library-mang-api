@@ -22,6 +22,10 @@ class Borrowing extends Model
         'status',
 
     ];
+    protected $attributes = [
+    'status' => 'borrowed', // ✅ always set, even when not passed to create()
+    ];
+
 //use cast to use it when read data form table it return as string so when make cast it know model to return data as specifc type that will benefit when use type method lke addday from data type date and retrun 1 that known as ture when cast boolen
     protected $casts = [
         'borrowed_date'  => 'date',

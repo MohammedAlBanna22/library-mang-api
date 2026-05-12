@@ -19,13 +19,17 @@ class Book extends Model
         'description',
         'author_id',
         'genre',
-        'published_date',
+        'published_at',
         'total_copies',
         'available_copies',
         'price',
         'cover_image',
         'status',
+
     ];
+    protected $casts = [
+    'published_at' => 'date',
+];
 
     public function author()
     {

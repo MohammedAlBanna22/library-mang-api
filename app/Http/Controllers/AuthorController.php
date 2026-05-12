@@ -67,9 +67,8 @@ class AuthorController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy(Author $author)
     {
-        $author = Author::findOrFail($id);
         $author->delete();
         return response()->json([
             'message'=>'the author is deleted',
