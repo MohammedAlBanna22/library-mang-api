@@ -3,18 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreAuthorRequest;
+use App\Http\Requests\UpdateAuthorRequest;
 use App\Http\Resources\AuthorResource;
 use App\Models\Author;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Nette\Schema\Message;
 
 class AuthorController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
+
+        if (auth()->user()->cannot('viewAny',  Author::class)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Only admin can view authors list',
+            ], 403);
+        }
+         $this->authorize('viewAny', Author::class);
 
         $authors = Author::with('books')->paginate(10);
 
@@ -32,13 +43,13 @@ class AuthorController extends Controller
      */
     public function store(StoreAuthorRequest $request)// use storeauthorrequest to make custim valdiate
     {
-        //
-        $author= Author::create($request->validated());
-        // return response()->json([
-        //     '$author'=>$author,
-        //     'message'=>'the author is stored',
-        // ],200);
-        return new AuthorResource($author);// use resource to show what data to display
+        $this->authorize('create', Author::class);
+        $author = Author::create([
+            ...$request->validated(),
+            'status'  => 'active',                          // 👈 Admin يضيف مباشرة active
+        ]);
+
+        return new AuthorResource($author);
 
     }
 
@@ -47,6 +58,16 @@ class AuthorController extends Controller
      */
     public function show(Author $author)
     {
+
+        if (auth()->user()->cannot('view', $author)) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Only admin or owner can view this author',
+         ], 403);
+        }
+
+        $this->authorize('view', $author);
+        $author->load('user', 'books');
         // use Author route model binding to get the author by id and make it as collection to display
        // $author= Author::findOrFail($id);
        //laravel will automatically find the author by id and if not found it will throw 404 error
@@ -59,6 +80,8 @@ class AuthorController extends Controller
      */
     public function update(StoreAuthorRequest $request, Author $author)
     {
+         $this->authorize('update', $author);
+
         $author->update($request->validated());
         return new AuthorResource($author);
 
@@ -69,9 +92,28 @@ class AuthorController extends Controller
      */
     public function destroy(Author $author)
     {
+        $this->authorize('delete', $author); // 👈
+        $author->user->update(['role' => 'member']);
         $author->delete();
         return response()->json([
             'message'=>'the author is deleted',
         ],200);
+    }
+    // Author يعدل نفسه
+    public function updateMe(UpdateAuthorRequest $request)
+    {
+        $author = auth()->user()->author;
+
+        if (!$author) {
+            return response()->json([
+                'message' => 'Author profile not found.',
+                'status'  => false
+            ], 404);
+        }
+
+        $this->authorize('update', $author);
+
+        $author->update($request->validated());
+        return new AuthorResource($author);
     }
 }

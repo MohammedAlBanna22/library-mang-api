@@ -19,8 +19,10 @@ namespace App\Models{
  * @property string|null $nationality
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property int $user_id
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Book> $books
  * @property-read int|null $books_count
+ * @property-read \App\Models\User $user
  * @method static \Database\Factories\AuthorFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Author newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Author newQuery()
@@ -31,8 +33,31 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Author whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Author whereNationality($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Author whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Author whereUserId($value)
  */
 	class Author extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $reason
+ * @property string $status
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AuthorRequest newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AuthorRequest newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AuthorRequest query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AuthorRequest whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AuthorRequest whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AuthorRequest whereReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AuthorRequest whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AuthorRequest whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AuthorRequest whereUserId($value)
+ */
+	class AuthorRequest extends \Eloquent {}
 }
 
 namespace App\Models{
@@ -92,6 +117,7 @@ namespace App\Models{
  * @method static \Database\Factories\BorrowingFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Borrowing newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Borrowing newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Borrowing overdue()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Borrowing query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Borrowing whereBookId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Borrowing whereBorrowedDate($value)
@@ -109,10 +135,9 @@ namespace App\Models{
 namespace App\Models{
 /**
  * @property int $id
- * @property string $name
- * @property string $email
  * @property string $address
  * @property \Illuminate\Support\Carbon $membership_date
+ * @property int $user_id
  * @property string $status
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -120,18 +145,18 @@ namespace App\Models{
  * @property-read int|null $active_borrowings_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Borrowing> $borrowings
  * @property-read int|null $borrowings_count
+ * @property-read \App\Models\User $user
  * @method static \Database\Factories\MemberFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Member newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Member newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Member query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Member whereAddress($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Member whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Member whereEmail($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Member whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Member whereMembershipDate($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Member whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Member whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Member whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Member whereUserId($value)
  */
 	class Member extends \Eloquent {}
 }
@@ -146,6 +171,9 @@ namespace App\Models{
  * @property string|null $remember_token
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string $role
+ * @property-read \App\Models\Author|null $author
+ * @property-read \App\Models\Member|null $member
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
@@ -161,6 +189,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRole($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
  */
 	class User extends \Eloquent {}

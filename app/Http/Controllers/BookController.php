@@ -6,8 +6,10 @@ use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Http\Resources\BookResource;
 use App\Models\Book;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
 class BookController extends Controller
@@ -15,6 +17,8 @@ class BookController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+    use AuthorizesRequests;
     public function index( Request $request)
     {
         // $books= Book::with('author')->paginate(10);
@@ -55,8 +59,14 @@ class BookController extends Controller
      */
     public function store(StoreBookRequest $request)
     {
-        //
-        $book= Book::create($request->validated());
+        // can store book if user is admin or author but author can only create books for himself
+         $this->authorize('create', Book::class);
+        $data = $request->validated();
+          // If the user is an author, ensure they can only create books for themselves or admin can specify any author for the book by adding author id in request
+         if (auth()->user()->isAuthor()) {
+           $data['author_id']  = auth()->user()->author?->id;
+        }
+        $book= Book::create($data);
         $book->load('author');
         return new BookResource($book);
     }
@@ -85,6 +95,8 @@ class BookController extends Controller
     public function update(UpdateBookRequest $request, Book $book)
     {
         //
+        $this->authorize('update', $book);
+
         $book->update($request->validated());
         $book->load('author');
         return new BookResource($book);
@@ -102,9 +114,9 @@ class BookController extends Controller
         //     'status' => true,
         //     'message' => 'Book deleted successfully'], 200);//204 no content
 
-
             try {
                 $book = Book::findOrFail($id);
+                 $this->authorize('delete', $book);
                   $book->delete();
                 return response()->json([
                     'status' => true,
@@ -115,6 +127,27 @@ class BookController extends Controller
                     'status' => false,
                     'message' => 'Book not found'], 404);
              }
+             catch (AuthorizationException $e) {
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Only admin can delete books'
+                ], 403);
+            }
 
     }
+
+
+    // Author يشوف كتبه فقط
+    public function myBooks()
+    {
+        if (!auth()->user()->isAuthor()) {
+            return response()->json(['message' => 'not allowed'], 403);
+        }
+
+        $books = Book::where('author_id', auth()->user()->author?->id)->get();
+         return BookResource::collection($books);
+
+    }
+
 }

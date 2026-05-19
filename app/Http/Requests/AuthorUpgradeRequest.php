@@ -4,9 +4,8 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class StoreBookRequest extends FormRequest
+class AuthorUpgradeRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,15 +23,11 @@ class StoreBookRequest extends FormRequest
     public function rules(): array
     {
         return [
-        'title' => 'required|string|max:255',
-        'isbn' => 'required|unique:books,isbn',
-        'description' => 'nullable|string',
-        'author_id' => 'sometimes|required|exists:authors,id',
-        'genre' => 'nullable|string',
-        'published_at' => 'nullable|date',
-        'total_copies' => 'required|integer|min:1',
-        'price' => 'nullable|numeric|min:0',
-        'cover_image' => 'nullable|string',
+            //
+            'reason'      => 'required|string|min:10|max:500',
+            'phone'       => 'required|string|max:20',
+            'bio'         => 'nullable|string',
+            'nationality' => 'nullable|string',
         ];
     }
 }

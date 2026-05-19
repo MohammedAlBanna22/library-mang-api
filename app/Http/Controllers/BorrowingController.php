@@ -29,18 +29,6 @@ class BorrowingController extends Controller
             $query->where('member_id', $request->member_id);
         }
 
-        //  if($request->has('search')) {
-
-        //     $search = $request->search;
-
-        //     $query->where(function ($q) use ($search) {
-
-        //         $q->whereHas('book', function ($bookQuery) use ($search) {
-        //             $bookQuery->where('title', 'like', "%{$search}%");
-        //         })->orWhereHas('member', function ($memberQuery) use ($search) {
-        //             $memberQuery->where('name', 'like', "%{$search}%");
-        //         });
-        //     });
 
 
         $borrowings= $query->latest()->paginate(10);
@@ -54,7 +42,7 @@ class BorrowingController extends Controller
     public function store(StoreBorrowingRequest $request)
     {
         //
-        $book= Book::find($request->book_id);
+        $book= Book::findOrFail($request->book_id);
         if(!$book || !$book->isAvailable()){
 
             return response()->json([
@@ -76,7 +64,6 @@ class BorrowingController extends Controller
          //
          try {
              $borrowing = Borrowing::with(['book', 'member'])->findOrFail($id);
-             $borrowing->load(['book', 'member']);
              return new BorrowingResource($borrowing);
          } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
              return response()->json([
@@ -88,10 +75,17 @@ class BorrowingController extends Controller
 
         public function returnBook(Borrowing $borrowing)
         {
-            if ($borrowing->status !== 'borrowed') {
+            // if ($borrowing->status !== 'borrowed') {
+            //     return response()->json([
+            //         'status' => false,
+            //         'message' => 'This book is not currently borrowed'], 422);
+            // }
+
+            if (!$borrowing->canBeReturned()) {
                 return response()->json([
-                    'status' => false,
-                    'message' => 'This book is not currently borrowed'], 422);
+                'status'  => false,
+                'message' => 'This book cannot be returned'
+            ], 422);
             }
 
             $borrowing->update([
@@ -104,19 +98,26 @@ class BorrowingController extends Controller
 
             return new BorrowingResource($borrowing);
         }
+//check overdue borrowing and update status to overdue
 
         public function overdue()
         {
-            $overdueBorrowings = Borrowing::with(['book', 'member'])
-                ->where('status', 'borrowed')
-                ->where('due_date', '<', now())
-                ->get();
-
-                Borrowing::where('status', 'borrowed')
-                ->where('due_date', '<', now())
-                ->update(['status' => 'overdue']);
-                //->latest()->paginate(10);
+            $overdueBorrowings = Borrowing::overdue()
+                ->with(['book', 'member'])
+                 ->latest()
+                ->paginate(10);
 
             return BorrowingResource::collection($overdueBorrowings);
+        }
+
+        public function overdueStatus()
+        {
+             $count = Borrowing::markAllOverdue();
+
+            return response()->json([
+                'status'  => true,
+                'message' => "$count borrowing(s) marked as overdue",
+                'count'   => $count
+            ]);
         }
 }

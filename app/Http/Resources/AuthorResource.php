@@ -16,10 +16,13 @@ class AuthorResource extends JsonResource
     {
         //return parent::toArray($request);
         return [
-            'name'=> strtoupper( $this->name),// use $this instead $request to ake data as collection to display and strtoupper for make name capital
+            'name'=> strtoupper( $this->user->name),// use $this instead $request to ake data as collection to display and strtoupper for make name capital
             'bio'=>$this->bio,
             'nationality'=>strtolower($this->nationality),// make small letter
+            'phone'=>$this->phone,
+             'status' => $this->status,
             'books'=>$this->when($this->relationLoaded('books'),$this->books->count())
+
         ];
 
     }

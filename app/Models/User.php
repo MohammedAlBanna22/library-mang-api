@@ -23,6 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -46,5 +47,24 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function isAdmin(): bool   { return $this->role === 'admin'; }
+    public function isMember(): bool  { return $this->role === 'member'; }
+    public function isAuthor(): bool  { return $this->role === 'author'; }
+        public function author()
+    {
+        return $this->hasOne(Author::class);
+    }
+
+        public function member()
+    {
+        return $this->hasOne(Member::class);
+    }
+
+    // Check if user completed profile
+    public function hasCompletedProfile(): bool
+    {
+        return $this->member()->exists();
     }
 }

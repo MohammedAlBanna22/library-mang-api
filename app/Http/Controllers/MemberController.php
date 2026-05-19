@@ -45,8 +45,31 @@ class MemberController extends Controller
      */
     public function store(StoreMemberRequest $request)
     {
-        //
-        $member= Member::create($request->validated());
+        $isAdmin = auth()->user()->role === 'admin';
+
+        // Case 1: Admin → user_id من الـ Body
+        // Case 2: Member → user_id من الـ Token
+         $userId = $isAdmin
+            ? $request->validated()['user_id']
+            : auth()->id();
+
+        // ✅ تحقق من التكرار للحالتين
+        if (Member::where('user_id', $userId)->exists()) {
+            return response()->json([
+                'message' => $isAdmin
+                    ? 'This user already has a member profile.'
+                     : 'You already have a member profile.',
+                    'status' => false
+            ], 409);
+        }
+
+        $member = Member::create([
+            ...$request->validated(),
+            'user_id' => $userId,  // 👈 override دايماً لمنع التلاعب
+        ]);
+
+        $member->load('user');
+
         return new MemberResource($member);
     }
 
@@ -72,13 +95,40 @@ class MemberController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateMemberRequest $request, Member $member)
+    public function update(UpdateMemberRequest $request, member $member)
     {
         // we use patch method to update only the fields that are sent in the request, so we can use the same validation rules as store method instead use put method which requires all fields to be sent in the request
+
+
+
+        //  $member = auth()->user()->member;
+
+        // if (!$member) {
+        //     return response()->json([
+        //     'message' => 'Please complete your profile first.'
+        //     ], 404);
+        // }
+
+            // allow admin
+    if (auth()->user()->role !== 'admin' ){
+
+        return response()->json([
+        'message' => 'You are not allowed to access or modify this member.',
+        'status' => false
+    ], 403);
+    }
+
+
+
 
         $member->update($request->validated());
        // $member->load('borrowings');
         return new MemberResource($member);
+
+
+
+
+
     }
 
     /**
@@ -108,5 +158,22 @@ class MemberController extends Controller
 
 
 
+    }
+
+    public function updateMe(UpdateMemberRequest $request)
+    {
+        $member = auth()->user()->member;
+
+        if (!$member) {
+            return response()->json([
+                'message' => 'Please complete your profile first.',
+                'status'  => false
+            ], 404);
+        }
+
+        $member->update($request->validated());
+         $member->load('user');
+
+        return new MemberResource($member);
     }
 }

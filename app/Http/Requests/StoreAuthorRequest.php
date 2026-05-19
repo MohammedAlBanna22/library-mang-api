@@ -24,9 +24,25 @@ class StoreAuthorRequest extends FormRequest
     {
         return [
             //
-            'name'=>'required|string|max:255',
-            'bio'=>'nullable|string',
-            'nationality'=>'nullable|string'
+        'user_id' => [
+                'required',
+                'exists:users,id',
+                'unique:authors,user_id',  // 👈 تأكد هيك مكتوبة
+        ],
+        'bio'=>'nullable|string',
+        'nationality'=>'nullable|string',
+        'phone'       => 'required|string|max:20',
+
+        ];
+    }
+
+
+    public function messages(): array
+    {
+        return [
+            'user_id.unique' => 'This user is already an author.',
+            'user_id.exists' => 'This user does not exist.',
+            'user_id.required' => 'User ID is required.',
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Resources\BorrowingResource;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -48,5 +49,32 @@ class Borrowing extends Model
     {
         return $this->due_date < Carbon::today()
             && $this->status === 'borrowed';
+    }
+
+    public function scopeOverdue($query)
+    {
+    return $query->where('status', 'overdue');
+    }
+
+    public static function markAllOverdue(): int
+    {
+    return self::where('status', 'borrowed')
+        ->where('due_date', '<', now())
+        ->update(['status' => 'overdue']);
+    }
+
+
+        public function canBeReturned(): bool
+    {
+        return in_array($this->status, ['borrowed', 'overdue']);
+    }
+
+
+    public function markAsReturned(): void
+    {
+        $this->update([
+            'status'        => 'returned',
+            'returned_date' => now(),
+        ]);
     }
 }

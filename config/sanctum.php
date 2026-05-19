@@ -50,7 +50,10 @@ return [
     |
     */
 
-    'expiration' => null,
+    'expiration' =>  1440,//24 hours (in minutes)
+    // 60,//60 minutes
+    //60 * 24 * 7, // 7 days (in minutes)
+    //null,
 
     /*
     |--------------------------------------------------------------------------

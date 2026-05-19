@@ -13,8 +13,7 @@ class Member extends Model
 
 
     protected $fillable = [
-        'name',
-        'email',
+        'user_id',
         'phone',
         'address',
         'membership_date',
@@ -34,6 +33,11 @@ class Member extends Model
     {
         return $this->borrowings()
             ->where('status', 'borrowed');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
 }

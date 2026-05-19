@@ -17,8 +17,12 @@ class MemberResource extends JsonResource
         //return parent::toArray($request);
         return [
            // 'id' => $this->id,
-            'name' => $this->name,
-            'email' => $this->email,
+            //'name' => $this->user->name,
+            //'email' => $this->user->email,
+            'user'            => [
+            'name'  => $this->user?->name,
+            'email' => $this->user?->email,
+        ],
             'address' => $this->address,
             'membership_date' => $this->membership_date,
             'status' => $this->status,

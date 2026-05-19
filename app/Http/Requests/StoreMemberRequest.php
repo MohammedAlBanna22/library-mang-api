@@ -23,13 +23,17 @@ class StoreMemberRequest extends FormRequest
      */
     public function rules(): array
     {
+        $isAdmin = auth()->user()->role === 'admin';
+
         return [
             //
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:members,email',
+            // 'phone' => 'required|string|max:20',
+            // 👈 required للـ admin، ممنوع للـ member
+            'user_id'         => $isAdmin ? 'required|exists:users,id' : 'prohibited',
             'address' => 'nullable|string|max:255',
             'membership_date' => 'required|date',
             'status' => 'required',
+           // 'user_id' => 'sometimes|exists:users,id',
 
         ];
     }
