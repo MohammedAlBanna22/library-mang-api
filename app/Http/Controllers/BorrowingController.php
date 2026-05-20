@@ -6,13 +6,16 @@ use App\Http\Requests\StoreBorrowingRequest;
 use App\Http\Resources\BorrowingResource;
 use App\Models\Book;
 use App\Models\Borrowing;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BorrowingController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+      use AuthorizesRequests;
     public function index(Request $request)
     {
         //
@@ -42,6 +45,14 @@ class BorrowingController extends Controller
     public function store(StoreBorrowingRequest $request)
     {
         //
+        $member = auth()->user()->member;
+
+        if (!$member) {
+            return response()->json([
+                'message' => 'You must be member .',
+                'status'  => false
+            ], 403);
+        }
         $book= Book::findOrFail($request->book_id);
         if(!$book || !$book->isAvailable()){
 
@@ -49,8 +60,18 @@ class BorrowingController extends Controller
                 'status' => false,
                 'message' => 'Book is not available for borrowing'], 422);
         }
-        $borrowing = Borrowing::create($request->validated());
-        $book->borrow() ;
+
+
+        $borrowing = DB::transaction(function () use ($request, $member, $book) {
+            $book->borrow();
+
+            return Borrowing::create([
+                ...$request->validated(),
+                'member_id' => $member->id,
+                'status'    => 'borrowed',
+            ]);
+        });
+
         $borrowing->load(['book', 'member']);
         return new BorrowingResource($borrowing);
 
@@ -73,14 +94,9 @@ class BorrowingController extends Controller
      }
 
 
-        public function returnBook(Borrowing $borrowing)
-        {
-            // if ($borrowing->status !== 'borrowed') {
-            //     return response()->json([
-            //         'status' => false,
-            //         'message' => 'This book is not currently borrowed'], 422);
-            // }
-
+    public function returnBook(Borrowing $borrowing)
+    {
+            $this->authorize('returnBook', $borrowing);
             if (!$borrowing->canBeReturned()) {
                 return response()->json([
                 'status'  => false,
@@ -88,36 +104,39 @@ class BorrowingController extends Controller
             ], 422);
             }
 
-            $borrowing->update([
-                'returned_date' => now(),
-                'status' => 'returned',
-            ]);
+            DB::transaction(function () use ($borrowing) {
+                $borrowing->update([
+                    'returned_date' => now(),
+                    'status'        => 'returned',
+                ]);
 
-            $borrowing->book->returnBook();
+                $borrowing->book->returnBook();
+            });
+
             $borrowing->load(['book', 'member']);
 
             return new BorrowingResource($borrowing);
-        }
+    }
 //check overdue borrowing and update status to overdue
 
-        public function overdue()
-        {
-            $overdueBorrowings = Borrowing::overdue()
+    public function overdue()
+    {
+        $overdueBorrowings = Borrowing::overdue()
                 ->with(['book', 'member'])
                  ->latest()
                 ->paginate(10);
 
-            return BorrowingResource::collection($overdueBorrowings);
-        }
+        return BorrowingResource::collection($overdueBorrowings);
+    }
 
-        public function overdueStatus()
-        {
-             $count = Borrowing::markAllOverdue();
+    public function overdueStatus()
+    {
+        $count = Borrowing::markAllOverdue();
 
-            return response()->json([
-                'status'  => true,
-                'message' => "$count borrowing(s) marked as overdue",
-                'count'   => $count
-            ]);
-        }
+        return response()->json([
+            'status'  => true,
+            'message' => "$count borrowing(s) marked as overdue",
+            'count'   => $count
+        ]);
+    }
 }

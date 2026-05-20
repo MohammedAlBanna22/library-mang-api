@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Schedule;
 
 
 
+
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
@@ -15,3 +16,7 @@ Artisan::command('inspire', function () {
 Schedule::call(function () {
     Borrowing::markAllOverdue(); // ← same method, no duplication
 })->dailyAt('00:00');
+
+Schedule::command('borrowings:mark-overdue')
+    ->dailyAt('00:00')
+    ->withoutOverlapping();

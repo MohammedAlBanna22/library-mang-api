@@ -16,7 +16,7 @@ class BorrowingResource extends JsonResource
     {
         //return parent::toArray($request);
         return [
-           // 'id' => $this->id,
+            'id' => $this->id,
             'borrowed_date' => $this->borrowed_date,
             'due_date' => $this->due_date,
             'returned_date' => $this->returned_date,

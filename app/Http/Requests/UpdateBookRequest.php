@@ -23,22 +23,38 @@ class UpdateBookRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            //
-        'title' => 'required|string|max:255',
-        'isbn' => [
+    $isAdmin = auth()->user()->role === 'admin';
+
+    return [
+        'title'        => 'sometimes|required|string|max:255',
+        'isbn'         => [
+            'sometimes',
             'required',
             'string',
-            Rule::unique(table: 'books', column: 'isbn')
-                ->ignore(id: $this->route(param: 'book')->id),
-        ],// ignore this book's ISBN when updating
-        'description' => 'nullable|string',
-        'author_id' => 'required|exists:authors,id',
-        'genre' => 'nullable|string',
+            Rule::unique('books', 'isbn')
+                ->ignore($this->route('book')->id),
+        ],
+        'description'  => 'nullable|string',
+        'author_id'    => $isAdmin
+            ? 'sometimes|exists:authors,id'  // 👈 Admin بس يغيّر الـ author
+            : 'prohibited',                   // 👈 Author ما يغيّر
+        'genre'        => 'nullable|string',
         'published_at' => 'nullable|date',
-        'total_copies' => 'required|integer|min:1',
-        'price' => 'nullable|numeric|min:0',
-        'cover_image' => 'nullable|string',
-        ];
+        'total_copies' => 'sometimes|required|integer|min:1',
+        'price'        => 'nullable|numeric|min:0',
+        'cover_image'  => 'nullable|string',
+    ];
     }
+
+    public function messages(): array
+    {
+    return [
+        'isbn.unique'        => 'This ISBN is already taken.',
+        'author_id.exists'   => 'This author does not exist.',
+        'author_id.prohibited' => 'You are not allowed to change the author.',
+        'total_copies.min'   => 'Total copies must be at least 1.',
+    ];
+    }
+
+
 }

@@ -25,7 +25,7 @@ class StoreBorrowingRequest extends FormRequest
         return [
             //
             'book_id' => 'required|exists:books,id',
-            'member_id' => 'required|exists:members,id',
+            //'member_id' => 'required|exists:members,id',
             'borrowed_date' => 'required|date',
             'due_date' => 'required|date|after:borrowed_at',
            'status' => 'sometimes|in:borrowed,returned,overdue',

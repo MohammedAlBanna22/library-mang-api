@@ -2,16 +2,14 @@
 
 namespace App\Models;
 
-use App\Http\Resources\BorrowingResource;
+use App\Enums\BorrowingStatus;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-
 class Borrowing extends Model
 {
-    /** @use HasFactory<\Database\Factories\BorrowingFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -21,19 +19,22 @@ class Borrowing extends Model
         'due_date',
         'returned_date',
         'status',
-
     ];
+
     protected $attributes = [
-    'status' => 'borrowed', // ✅ always set, even when not passed to create()
+        'status' => 'borrowed',
     ];
 
-//use cast to use it when read data form table it return as string so when make cast it know model to return data as specifc type that will benefit when use type method lke addday from data type date and retrun 1 that known as ture when cast boolen
     protected $casts = [
-        'borrowed_date'  => 'date',
-        'due_date'       => 'date',
-        'returned_date'  => 'date',
+        'status'        => BorrowingStatus::class,
+        'borrowed_date' => 'date',
+        'due_date'      => 'date',
+        'returned_date' => 'date',
     ];
 
+    protected $appends = ['is_overdue'];
+
+    // Relationships
     public function book(): BelongsTo
     {
         return $this->belongsTo(Book::class);
@@ -44,37 +45,50 @@ class Borrowing extends Model
         return $this->belongsTo(Member::class);
     }
 
-    // Check if borrowing is overdue
-    public function isOverdue(): bool
+    // Computed
+    public function getIsOverdueAttribute(): bool
     {
-        return $this->due_date < Carbon::today()
-            && $this->status === 'borrowed';
+        return $this->status === BorrowingStatus::Overdue;
     }
 
-    public function scopeOverdue($query)
+    // Checks
+    public function isOverdue(): bool
     {
-    return $query->where('status', 'overdue');
+        return $this->status === BorrowingStatus::Overdue;
+    }
+
+    public function canBeReturned(): bool
+    {
+        return $this->status->canBeReturned();
+    }
+
+    // Actions
+    public function markAsReturned(): void
+    {
+        $this->update([
+            'status'        => BorrowingStatus::Returned,
+            'returned_date' => now(),
+        ]);
     }
 
     public static function markAllOverdue(): int
     {
-    return self::where('status', 'borrowed')
-        ->where('due_date', '<', now())
-        ->update(['status' => 'overdue']);
+        return self::where('status', BorrowingStatus::Borrowed)
+            ->where('due_date', '<', now())
+            ->update(['status' => BorrowingStatus::Overdue]);
     }
 
-
-        public function canBeReturned(): bool
+    // Scopes
+    public function scopeOverdue($query)
     {
-        return in_array($this->status, ['borrowed', 'overdue']);
+        return $query->where('status', BorrowingStatus::Overdue);
     }
 
-
-    public function markAsReturned(): void
+    public function scopeActive($query)
     {
-        $this->update([
-            'status'        => 'returned',
-            'returned_date' => now(),
+        return $query->whereIn('status', [
+            BorrowingStatus::Borrowed,
+            BorrowingStatus::Overdue,
         ]);
     }
 }
