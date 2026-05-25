@@ -5,17 +5,15 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-
-// Public
+// Public  → api/auth/register & api/auth/login
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login',    [AuthController::class, 'login']);
+Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('reset-password', [AuthController::class, 'resetPassword']);
 
-// Protected (auth:sanctum موجود من الملف الرئيسي)
-Route::prefix('auth')->group(function () {
-    Route::post('logout', [AuthController::class, 'logout']);
-   // Route::get('user',    [AuthController::class, 'user']);
+// Protected  → api/auth/logout, api/auth/forgot-password, etc.
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('logout',          [AuthController::class, 'logout']);
+    Route::post('refresh-token',   [AuthController::class, 'refreshToken']);
+    Route::get('user', [AuthController::class, 'user']);
 });
-
-Route::get('/user', function (Request $request) {
-        return $request->user();
-    })->middleware('auth:sanctum');

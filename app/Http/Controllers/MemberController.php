@@ -4,14 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreMemberRequest;
 use App\Http\Requests\UpdateMemberRequest;
+use App\Http\Resources\BorrowingResource;
 use App\Http\Resources\MemberResource;
+use App\Models\Borrowing;
 use App\Models\Member;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
 class MemberController extends Controller
 {
+      use AuthorizesRequests;
     /**
      * Display a listing of the resource.
      */
@@ -176,4 +180,65 @@ class MemberController extends Controller
 
         return new MemberResource($member);
     }
+
+    public function borrowings(Member $member)
+    {
+        $this->authorize('viewAny', [Borrowing::class, $member]);
+
+        $borrowings = $member->borrowings()
+            ->with(['book'])
+            ->latest()
+            ->paginate(10);
+
+        return BorrowingResource::collection($borrowings);
+    }
+
+    public function fines(Member $member)
+    {
+        $this->authorize('viewAny', [Borrowing::class, $member]);
+
+        $borrowings = $member->borrowings()
+            ->withFines()
+            ->with(['book'])
+            ->get();
+
+        $fines = $borrowings->map(fn($borrowing) => [
+            'borrowing_id'  => $borrowing->id,
+            'book'          => $borrowing->book->title,
+            'due_date'      => $borrowing->due_date->toDateString(),
+            'returned_date' => $borrowing->returned_date?->toDateString(),
+            'overdue_days'  => $borrowing->getOverdueDays(),
+            'fine_amount'   => $borrowing->calculateFine(),
+            'status'        => $borrowing->status,
+        ]);
+
+        return response()->json([
+            'status'     => true,
+            'member'     => $member->name,
+            'total_fine' => round($fines->sum('fine_amount'), 2),
+            'currency'   => 'USD',
+            'fines'      => $fines,
+        ]);
+    }
+
+
+    public function suspend(Request $request, Member $member)
+    {
+       // $this->authorize('suspend', $member);
+
+        if ($member->isSuspended()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Member is already suspended.',
+            ], 422);
+        }
+
+        $member->suspend();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Member suspended successfully.',
+        ]);
+    }
+
 }

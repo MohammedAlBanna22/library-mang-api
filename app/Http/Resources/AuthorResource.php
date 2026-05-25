@@ -16,6 +16,7 @@ class AuthorResource extends JsonResource
     {
         //return parent::toArray($request);
         return [
+             'id' => (int) $this->id,
             'name'=> strtoupper( $this->user->name),// use $this instead $request to ake data as collection to display and strtoupper for make name capital
             'bio'=>$this->bio,
             'nationality'=>strtolower($this->nationality),// make small letter

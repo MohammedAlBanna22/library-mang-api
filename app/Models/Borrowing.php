@@ -19,6 +19,11 @@ class Borrowing extends Model
         'due_date',
         'returned_date',
         'status',
+        'renewal_count',
+        'fine_paid',
+        'fine_amount',
+        'fine_paid_at',
+
     ];
 
     protected $attributes = [
@@ -30,6 +35,9 @@ class Borrowing extends Model
         'borrowed_date' => 'date',
         'due_date'      => 'date',
         'returned_date' => 'date',
+        'fine_paid'     => 'boolean',
+        'fine_amount'   => 'decimal:2',
+        'fine_paid_at'  => 'datetime',
     ];
 
     protected $appends = ['is_overdue'];
@@ -89,6 +97,69 @@ class Borrowing extends Model
         return $query->whereIn('status', [
             BorrowingStatus::Borrowed,
             BorrowingStatus::Overdue,
+        ]);
+    }
+    const FINE_PER_DAY = 0.5;
+
+    public function getOverdueDays(): int
+    {
+        if (!$this->isOverdue() && $this->status !== BorrowingStatus::Returned) {
+            return 0;
+        }
+
+        // مرجوع متأخر → من due_date لـ returned_date
+        // لسه عنده وoverdue → من due_date لـ now()
+        $compareDate = $this->returned_date ?? now();
+
+        $days = $this->due_date->startOfDay()->diffInDays($compareDate->startOfDay());
+
+        return $days > 0 ? (int) $days : 0;
+    }
+
+    public function calculateFine(): float
+    {
+        return round($this->getOverdueDays() * self::FINE_PER_DAY, 2);
+    }
+
+    // كم مرة يقدر يجدد
+    const MAX_RENEWALS = 2;
+
+   public function canBeRenewed(): bool
+    {
+        $today = now()->startOfDay();
+        $dueDate = $this->due_date->startOfDay();
+        $daysUntilDue = $today->diffInDays($dueDate, false);
+
+        // يقدر يجدد من 3 أيام قبل الانتهاء لحد آخر يوم
+        $isRenewalWindow = $daysUntilDue >= -0 && $daysUntilDue <= 3;
+
+        return $this->status === BorrowingStatus::Borrowed
+            && $this->renewal_count < self::MAX_RENEWALS
+            && $isRenewalWindow;
+    }
+
+
+    public function scopeWithFines($query)
+    {
+        return $query->whereIn('status', [
+            BorrowingStatus::Overdue,
+            BorrowingStatus::Returned,
+        ]);
+    }
+
+
+    public function isFinePaid(): bool
+    {
+        return $this->fine_paid;
+    }
+
+    public function payFine(): void
+    {
+        $amount = $this->calculateFine(); // احسب قبل ما تحدث
+        $this->update([
+            'fine_paid'    => true,
+            'fine_paid_at' => now(),
+             'fine_amount'  => $amount,
         ]);
     }
 }

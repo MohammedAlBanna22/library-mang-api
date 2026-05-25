@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Borrowing;
+use App\Models\Member;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
@@ -11,9 +12,9 @@ class BorrowingPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(User $user, Member $member): bool
     {
-        return false;
+         return $user->role === 'admin' || $member->user_id === $user->id;
     }
 
     /**
@@ -21,8 +22,9 @@ class BorrowingPolicy
      */
     public function view(User $user, Borrowing $borrowing): bool
     {
-        return false;
+           return $user->isAdmin() || $borrowing->member->user_id === $user->id;
     }
+
 
     /**
      * Determine whether the user can create models.
@@ -78,4 +80,20 @@ class BorrowingPolicy
 
         return false;
     }
+
+
+    // Member يجدد كتابه بس، Admin يجدد أي كتاب
+    public function renew(User $user, Borrowing $borrowing): bool
+    {
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        if ($user->role === 'member') {
+            return $borrowing->member->user_id === $user->id;
+        }
+
+        return false;
+    }
+
 }

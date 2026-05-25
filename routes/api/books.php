@@ -19,4 +19,6 @@ Route::middleware('role:admin,author')->group(function () {
 // Admin فقط
 Route::middleware('role:admin')->group(function () {
     Route::delete('/books/{book}', [BookController::class, 'destroy']);
+
 });
+Route::get('/books/{id}/availability', [BookController::class, 'availability']);

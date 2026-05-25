@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BorrowingStatus;
 use App\Http\Requests\StoreBorrowingRequest;
 use App\Http\Resources\BorrowingResource;
 use App\Models\Book;
 use App\Models\Borrowing;
+use App\Models\Member;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -139,4 +141,123 @@ class BorrowingController extends Controller
             'count'   => $count
         ]);
     }
+
+     public function borrowingHistory(Book $book)
+    {
+        $this->authorize('viewAny', Borrowing::class);
+
+        $history = $book->borrowings()
+                    ->with(['member.user'])
+                    ->latest()
+                    ->get();
+
+        if ($history->isEmpty()) {
+            return response()->json([
+                'message' => 'No borrowing history found.',
+                'status'  => false
+            ], 404);
+        }
+
+        return response()->json([
+            'book'    => [
+                'id'    => $book->id,
+                'title' => $book->title,
+                'book_isbn' => $book->isbn,
+            ],
+            'history' => BorrowingResource::collection($history),
+            'total'   => $history->count(),
+        ]);
+    }
+
+    public function renew(Borrowing $borrowing)
+    {
+        $this->authorize('renew', $borrowing);
+
+        if (!$borrowing->canBeRenewed()) {
+            return response()->json([
+                'message' => $this->getRenewalErrorMessage($borrowing),
+                'status'  => false
+            ], 422);
+        }
+
+        $borrowing->update([
+            'due_date'      => now()->addDays(14),
+            'renewal_count' => $borrowing->renewal_count + 1,
+            ]);
+
+        $borrowing->load(['book', 'member']);
+
+        return new BorrowingResource($borrowing);
+    }
+
+    private function getRenewalErrorMessage(Borrowing $borrowing): string
+    {
+        if ($borrowing->renewal_count >= Borrowing::MAX_RENEWALS) {
+            return 'Maximum renewals reached.';
+        }
+
+        if ($borrowing->status !== BorrowingStatus::Borrowed) {
+            return 'Only active borrowings can be renewed.';
+        }
+
+        $daysUntilDue = now()->startOfDay()->diffInDays($borrowing->due_date->startOfDay(), false);
+
+        if ($daysUntilDue > 3) {
+            $daysLeft = (int) $daysUntilDue;
+            return "Renewal not available yet. You can renew in last 3 days of {$daysLeft} days.";
+        }
+
+        if ($daysUntilDue < 0) {
+         return 'Borrowing is overdue and cannot be renewed.';
+        }
+
+        return 'This borrowing cannot be renewed.';
+    }
+
+
+    public function fine(Borrowing $borrowing)
+    {
+        $this->authorize('view', $borrowing);
+
+        return response()->json([
+            'status'        => true,
+            'is_overdue'    => $borrowing->isOverdue(),
+            'overdue_days'  => $borrowing->getOverdueDays(),
+            'fine_amount'   => $borrowing->calculateFine(),
+            'currency'      => 'USD',
+            'due_date'      => $borrowing->due_date->toDateString(),
+            'returned_date' => $borrowing->returned_date?->toDateString(),
+        ]);
+    }
+
+    public function payFine(Borrowing $borrowing)
+    {
+        $this->authorize('view', $borrowing);
+
+        if ($borrowing->calculateFine() === 0.0) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'No fine to pay.',
+            ], 422);
+        }
+
+        if ($borrowing->isFinePaid()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Fine already paid.',
+            ], 422);
+        }
+
+        $borrowing->payFine();
+
+         return response()->json([
+            'status'       => true,
+            'message'      => 'Fine paid successfully.',
+            'fine_amount'  => $borrowing->calculateFine(),
+            'paid_amount'  => $borrowing->fine_amount,
+            'currency'     => 'USD',
+            'fine_paid_at' => $borrowing->fine_paid_at->toDateTimeString(),
+        ]);
+    }
+
 }

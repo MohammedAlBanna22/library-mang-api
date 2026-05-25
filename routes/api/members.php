@@ -18,7 +18,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::get('/members', [MemberController::class, 'index']);
         Route::delete('/members/{id}', [MemberController::class, 'destroy']);
-      Route::patch('/members/{member}', [MemberController::class, 'update']);
+        Route::patch('/members/{member}', [MemberController::class, 'update']);
+       Route::patch('members/{member}/suspend', [MemberController::class, 'suspend']);
+
     });
 
     // ADMIN + MEMBER (create)
@@ -26,6 +28,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // SHOW SELF OR ADMIN
     Route::get('/members/{id}', [MemberController::class, 'show']);
+
+
+    Route::get('members/{member}/fines', [MemberController::class, 'fines']);
+    Route::get('members/{member}/borrowings', [MemberController::class, 'borrowings']);
+
 
 
 });

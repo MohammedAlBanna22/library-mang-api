@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\MemberStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -22,7 +23,7 @@ class Member extends Model
 
     protected $casts = [
         'membership_date' => 'date',
-    ];
+         'status' => MemberStatus::class, //for enum casting to return enum instance instead of string
 
     public function borrowings(): HasMany
     {
@@ -38,6 +39,21 @@ class Member extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->status === MemberStatus::Inactive;
+    }
+
+    public function suspend(): void
+    {
+        $this->update(['status' => MemberStatus::Inactive]);
+    }
+
+    public function unsuspend(): void
+    {
+        $this->update(['status' => MemberStatus::Active]);
     }
 
 }

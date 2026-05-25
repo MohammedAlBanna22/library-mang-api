@@ -78,12 +78,17 @@ class AuthorController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(StoreAuthorRequest $request, Author $author)
+    public function update(UpdateAuthorRequest $request, Author $author)
     {
-         $this->authorize('update', $author);
+         // عدّل الاسم على الـ user
+    if ($request->filled('name')) {
+        $author->user->update(['name' => $request->name]);
+    }
 
-        $author->update($request->validated());
-        return new AuthorResource($author);
+    // عدّل باقي البيانات على الـ author
+    $author->update($request->only(['bio', 'nationality', 'phone']));
+
+    return new AuthorResource($author);
 
     }
 

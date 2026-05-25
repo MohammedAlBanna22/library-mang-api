@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Http\Resources\BookResource;
+use App\Http\Resources\BorrowingResource;
 use App\Models\Book;
+use App\Models\Borrowing;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -35,7 +37,7 @@ class BookController extends Controller
 
                 $q->where('title', 'like', "%{$search}%")
                 ->orWhere('isbn', 'like', "%{$search}%")
-                ->orWhereHas('author', function (Builder $authorQuery) use ($search) {
+                ->orWhereHas('author.user', function (Builder $authorQuery) use ($search) {
 
                      $authorQuery->where('name', 'like', "%{$search}%");
 
@@ -150,4 +152,16 @@ class BookController extends Controller
 
     }
 
+    public function availability($id)
+    {
+    $book = Book::findOrFail($id);
+
+    return response()->json([
+        'book_id' => $book->id,
+        'available_copies' => $book->available_copies,
+        'is_available' => $book->is_available,
+    ]);
+    }
+
+   
 }
