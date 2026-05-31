@@ -55,12 +55,13 @@ class AuthorRequestController extends Controller
     $validated = $request->validated();
 
     $authorRequest = DB::transaction(function () use ($validated) {
-        $author = Author::create([
-            ...\Arr::except($validated, ['reason']), // 👈 احذف reason من الـ spread
-            'user_id' => auth()->id(),
-            'status'  => 'inactive',
-        ]);
-
+       $author = Author::updateOrCreate(
+            ['user_id' => auth()->id()],
+            [
+                ...\Arr::except($validated, ['reason']),
+                'status' => 'inactive',
+            ]
+        );
         return AuthorRequest::create([
             'user_id'   => auth()->id(),
             'author_id' => $author->id,

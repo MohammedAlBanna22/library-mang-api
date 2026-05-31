@@ -45,7 +45,7 @@ class AuthorPolicy
      */
     public function delete(User $user, Author $author): bool
     {
-          dd($user->role);
+         // dd($user->role);
         return $user->role === 'admin';
     }
 

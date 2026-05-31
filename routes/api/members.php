@@ -2,7 +2,9 @@
 // routes/api/members.php
 
 use App\Http\Controllers\MemberController;
+use App\Http\Resources\MemberResource;
 use Illuminate\Support\Facades\Route;
+
 
 // Admin فقط
 // Route::middleware('role:admin')->group(function () {
@@ -14,6 +16,22 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->group(function () {
    // UPDATE (handled inside controller logic)
     Route::patch('/members/me', [MemberController::class, 'updateMe']);
+
+ Route::get('/members/me', function () {
+        $member = auth()->user()->member;
+
+        if (!$member) {
+            return response()->json([
+                'message' => 'Member profile not found. Please create one first.',
+                'status' => false
+            ], 404);
+        }
+
+        return response()->json([
+            'data' => new MemberResource($member->load('user'))
+        ]);
+    });
+
     // ADMIN ONLY
     Route::middleware('role:admin')->group(function () {
         Route::get('/members', [MemberController::class, 'index']);

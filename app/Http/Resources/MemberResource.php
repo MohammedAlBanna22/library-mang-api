@@ -16,7 +16,7 @@ class MemberResource extends JsonResource
     {
         //return parent::toArray($request);
         return [
-           // 'id' => $this->id,
+             'id' => (int) $this->id,
             //'name' => $this->user->name,
             //'email' => $this->user->email,
             'user'            => [
@@ -30,6 +30,7 @@ class MemberResource extends JsonResource
                 $this->relationLoaded('activeBorrowings') ,
                 $this->activeBorrowings->count(),
                  ),
+            'phone' => $this->phone,
 
         ];
     }

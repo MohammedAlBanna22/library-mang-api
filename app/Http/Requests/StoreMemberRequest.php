@@ -33,6 +33,7 @@ class StoreMemberRequest extends FormRequest
             'address' => 'nullable|string|max:255',
             'membership_date' => 'required|date',
             'status' => 'required',
+            'phone' => ['required', 'string', 'max:20'],
            // 'user_id' => 'sometimes|exists:users,id',
 
         ];

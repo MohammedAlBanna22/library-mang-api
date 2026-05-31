@@ -68,6 +68,7 @@ class BookController extends Controller
          if (auth()->user()->isAuthor()) {
            $data['author_id']  = auth()->user()->author?->id;
         }
+        $data['available_copies'] = $data['total_copies'];
         $book= Book::create($data);
         $book->load('author');
         return new BookResource($book);
@@ -163,5 +164,5 @@ class BookController extends Controller
     ]);
     }
 
-   
+
 }

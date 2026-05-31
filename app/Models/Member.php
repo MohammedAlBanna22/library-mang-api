@@ -19,11 +19,13 @@ class Member extends Model
         'address',
         'membership_date',
         'status',
+        'phone',
     ];
 
     protected $casts = [
         'membership_date' => 'date',
          'status' => MemberStatus::class, //for enum casting to return enum instance instead of string
+    ];
 
     public function borrowings(): HasMany
     {
