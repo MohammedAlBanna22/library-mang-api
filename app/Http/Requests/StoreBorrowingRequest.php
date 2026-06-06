@@ -22,14 +22,27 @@ class StoreBorrowingRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            //
-            'book_id' => 'required|exists:books,id',
-            //'member_id' => 'required|exists:members,id',
-            'borrowed_date' => 'required|date',
-            'due_date' => 'required|date|after:borrowed_at',
-           'status' => 'sometimes|in:borrowed,returned,overdue',
-            'returned_date' => 'nullable|date|after:borrowed_date',
+        // return [
+        //     //
+        //     'book_id' => 'required|exists:books,id',
+        //     //'member_id' => 'required|exists:members,id',
+        //     'borrowed_date' => 'required|date',
+        //     'due_date' => 'required|date|after:borrowed_date',
+        //    //'status' => 'sometimes|in:borrowed,returned,overdue',
+        //     //'returned_date' => 'nullable|date|after:borrowed_date',
+        // ];
+
+         $user = $this->user();
+         $rules = [
+        'book_id' => 'required|exists:books,id',
+        'borrowed_date' => 'required|date',
+        'due_date' => 'required|date|after:borrowed_date',
         ];
+
+        if ($user && $user->role === 'admin') {
+            $rules['member_id'] = ['required', 'exists:members,id'];
+         }
+
+        return $rules;
     }
 }

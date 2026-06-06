@@ -22,6 +22,8 @@ class BorrowingResource extends JsonResource
             'returned_date' => $this->returned_date,
             'status'        => $this->status,
             'renewal_count' => $this->renewal_count,
+            'fine_amount'   => $this->fine_amount, // ✅ أضيف
+            'fine_paid'     => $this->fine_paid,   // ✅ أضيف
             'is_overdue'    => $this->isOverdue(),
 
 

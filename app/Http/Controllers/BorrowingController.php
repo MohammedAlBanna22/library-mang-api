@@ -21,7 +21,14 @@ class BorrowingController extends Controller
     public function index(Request $request)
     {
         //
-        $query = Borrowing::with(['book', 'member']);
+        $user = auth()->user();
+
+        $this->authorize('viewAny', Borrowing::class);
+
+       $query = Borrowing::query()->with(['book', 'member.user']);
+        if ($user->role === 'member') {
+            $query->where('member_id', $user->member->id);
+        }
         if (request()->has('status')) {
 
             $query->where('status', request()->status);
@@ -48,12 +55,19 @@ class BorrowingController extends Controller
     {
         //
         $member = auth()->user()->member;
+        $user = auth()->user();
+        $isAdmin = $user->role === 'admin';
+        if ($isAdmin) {
+            $member = Member::findOrFail($request->member_id);
+        } else {
+            $member = $user->member;
 
-        if (!$member) {
-            return response()->json([
+            if (!$member) {
+                return response()->json([
                 'message' => 'You must be member .',
                 'status'  => false
             ], 403);
+            }
         }
         $book= Book::findOrFail($request->book_id);
         if(!$book || !$book->isAvailable()){

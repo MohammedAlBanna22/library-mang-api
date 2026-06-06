@@ -50,7 +50,7 @@ class BookController extends Controller
             $query->where('genre', $request->genre);
         }
 
-        $books = $query->paginate(10);
+        $books = $query->latest()->paginate(10);
 
         return BookResource::collection($books);
 

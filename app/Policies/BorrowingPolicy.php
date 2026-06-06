@@ -12,9 +12,10 @@ class BorrowingPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user, Member $member): bool
+    public function viewAny(User $user): bool
     {
-         return $user->role === 'admin' || $member->user_id === $user->id;
+         //return $user->role === 'admin' || $member->user_id === $user->id;
+          return true;
     }
 
     /**

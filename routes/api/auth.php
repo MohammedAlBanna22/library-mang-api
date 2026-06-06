@@ -17,3 +17,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('refresh-token',   [AuthController::class, 'refreshToken']);
     Route::get('user', [AuthController::class, 'user']);
 });
+
+
+
+Route::middleware('auth:sanctum')->get('/me', function (Request $request) {
+    return response()->json([
+        'id'    => $request->user()->id,
+        'name'  => $request->user()->name,
+        'email' => $request->user()->email,
+        'role'  => $request->user()->role,
+    ]);
+});
