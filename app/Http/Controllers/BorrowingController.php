@@ -54,9 +54,10 @@ class BorrowingController extends Controller
     public function store(StoreBorrowingRequest $request)
     {
         //
-        $member = auth()->user()->member;
+          // احصل على المستخدم والـ member
         $user = auth()->user();
         $isAdmin = $user->role === 'admin';
+
         if ($isAdmin) {
             $member = Member::findOrFail($request->member_id);
         } else {
@@ -64,20 +65,37 @@ class BorrowingController extends Controller
 
             if (!$member) {
                 return response()->json([
-                'message' => 'You must be member .',
-                'status'  => false
-            ], 403);
+                    'message' => 'You must be a member.',
+                    'status'  => false
+                ], 403);
             }
         }
-        $book= Book::findOrFail($request->book_id);
-        if(!$book || !$book->isAvailable()){
 
+        // احصل على الكتاب
+        $book = Book::findOrFail($request->book_id);
+
+        // تحقق من أن الكتاب متاح في المكتبة
+        if (!$book || !$book->isAvailable()) {
             return response()->json([
-                'status' => false,
-                'message' => 'Book is not available for borrowing'], 422);
+                'status'  => false,
+                'message' => 'Book is not available for borrowing'
+            ], 422);
         }
 
+        // ✨ تحقق من عدم وجود استعارة نشطة (active) للكتاب نفسه
+        $hasActiveBorrowing = Borrowing::where('member_id', $member->id)
+            ->where('book_id', $book->id)
+            ->active()  // استخدم scope لاختيار Borrowed أو Overdue فقط
+            ->exists();
 
+        if ($hasActiveBorrowing) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'You already have an active borrowing of this book. Please return it first before borrowing again.'
+            ], 422);
+        }
+
+        // أنشئ الاستعارة
         $borrowing = DB::transaction(function () use ($request, $member, $book) {
             $book->borrow();
 
