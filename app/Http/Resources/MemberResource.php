@@ -19,7 +19,9 @@ class MemberResource extends JsonResource
              'id' => (int) $this->id,
             //'name' => $this->user->name,
             //'email' => $this->user->email,
+            'user_id' => $this->user_id,
             'user'            => [
+            'id' => $this->user?->id,
             'name'  => $this->user?->name,
             'email' => $this->user?->email,
         ],

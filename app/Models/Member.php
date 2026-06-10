@@ -3,15 +3,15 @@
 namespace App\Models;
 
 use App\Enums\MemberStatus;
+use Database\Factories\MemberFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Member extends Model
 {
-    /** @use HasFactory<\Database\Factories\MemberFactory> */
+    /** @use HasFactory<MemberFactory> */
     use HasFactory;
-
 
     protected $fillable = [
         'user_id',
@@ -24,7 +24,7 @@ class Member extends Model
 
     protected $casts = [
         'membership_date' => 'date',
-         'status' => MemberStatus::class, //for enum casting to return enum instance instead of string
+        'status' => MemberStatus::class, // for enum casting to return enum instance instead of string
     ];
 
     public function borrowings(): HasMany
@@ -57,5 +57,4 @@ class Member extends Model
     {
         $this->update(['status' => MemberStatus::Active]);
     }
-
 }
