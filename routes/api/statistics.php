@@ -8,7 +8,7 @@ use App\Models\Member;
 use Illuminate\Support\Facades\Route;
 
 // Admin فقط
-Route::middleware('role:admin')->get('/statistics', function () {
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/statistics', function () {
     return response()->json([
         'total_books'        => Book::count(),
         'total_authors'      => Author::count(),

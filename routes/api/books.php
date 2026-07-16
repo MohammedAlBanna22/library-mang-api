@@ -9,7 +9,7 @@ Route::get('/books',        [BookController::class, 'index']);
 Route::get('/books/{book}', [BookController::class, 'show']);
 
 // Admin و Author
-Route::middleware('role:admin,author')->group(function () {
+Route::middleware(['auth:sanctum', 'role:admin,author'])->group(function () {
     Route::post('/books',         [BookController::class, 'store']);
     Route::put('/books/{book}',   [BookController::class, 'update']);
     Route::patch('/books/{book}', [BookController::class, 'update']);
@@ -17,8 +17,8 @@ Route::middleware('role:admin,author')->group(function () {
 });
 
 // Admin فقط
-Route::middleware('role:admin')->group(function () {
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::delete('/books/{book}', [BookController::class, 'destroy']);
-
 });
+
 Route::get('/books/{id}/availability', [BookController::class, 'availability']);

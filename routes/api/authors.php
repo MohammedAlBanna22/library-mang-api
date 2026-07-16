@@ -24,7 +24,7 @@ Route::middleware('role:admin')->group(function () {
     Route::patch('/authors/{author}', [AuthorController::class, 'update']);
     Route::delete('/authors/{author}',[AuthorController::class, 'destroy']);
 
-    Route::get('/author-requests   ', [AuthorRequestController::class, 'index']);
+    Route::get('/author-requests', [AuthorRequestController::class,'index']);
     Route::patch('/author-requests/{authorRequest}/approve', [AuthorRequestController::class, 'approve']);
     Route::patch('/author-requests/{authorRequest}/reject', [AuthorRequestController::class, 'reject']);
 

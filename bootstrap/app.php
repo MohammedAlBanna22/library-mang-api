@@ -1,16 +1,13 @@
 <?php
 
 use App\Http\Middleware\RoleMiddleware;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-
-
-
-
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -30,7 +27,15 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-          $exceptions->renderable(function (NotFoundHttpException $e, Request $request) {
+
+        // ✅ جديد: أي طلب بدون تسجيل دخول (أو token غلط/منتهي) يرجع JSON مرتب بدل ما يحاول يعمل redirect لـ route اسمه login
+        $exceptions->renderable(function (AuthenticationException $e, Request $request) {
+            return response()->json([
+                'message' => 'Unauthenticated.'
+            ], 401);
+        });
+
+        $exceptions->renderable(function (NotFoundHttpException $e, Request $request) {
             $previous = $e->getPrevious();
 
             if ($previous instanceof ModelNotFoundException) {
